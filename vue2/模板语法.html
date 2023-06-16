@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue 测试实例</title>
+<script src="https://cdn.staticfile.org/vue/2.6.2/vue.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <!-- 文本插值 -->
+  <!-- 数据绑定最常见的形式就是使用 {{...}}（双大括号）的文本插值 -->
+  <p>{{ message }} + sk</p>
+  <!-- Html插值（替换节点innerHtml,可识别html标签） -->
+  <!-- 使用 v-html 指令用于输出 html 代码 -->
+  <p v-html="htmlMessage">sk</p>
+  
+  <!-- 属性 -->
+  <!-- HTML 属性中的值应使用 v-bind 指令。 -->
+  <p v-bind:style="{color: isRed ? 'red' : 'black'}">属性</p>
+  <!-- 属性-简写 -->
+  <p :style="{color: isRed ? 'red' : 'black'}">属性</p>
+  
+  <!-- on指令 -->
+  <img :style="{width: '500px'}" src="https://cn.vuejs.org/assets/directive.69c37117.png" alt="">
+  <div v-on:click="clickHandle">按钮1</div>
+  <!-- on指令-修饰符 -->
+  <!-- 修饰符是以半角句号 . 指明的特殊后缀，用于指出一个指令应该以特殊方式绑定。 -->
+  <a href="https://www.baidu.com" v-on:click.prevent="clickHandle">按钮2</a>
+  <!-- on指令-简写 -->
+  <div @click="clickHandle">按钮3</div>
+  <!-- 动态参数（可使用js表达式）(2.6.0+)-->
+  <div :[attrName]="{color: isRed ? 'red' : 'black'}" @[eventType]='clickHandle'>按钮4</div>
+
+  <!-- 侦听器 -->
+  <!-- 初始化时不触发，适合当需要在数据变化时执行异步或开销较大的操作时使用 -->
+  <p>original message: " <input v-model="message">"</p>
+  <p>reversed message: "{{ reserveMessage }}"</p>
+
+  <!-- 计算属性 -->
+  <!-- 计算属性是基于它们的响应式依赖进行缓存的。只在相关响应式依赖发生改变时它们才会重新求值 -->
+  <p>{{ fullName }}</p>
+
+  <!-- 条件渲染 -->
+  <!-- v-if 指令将根据表达式 show 的值(true 或 false )来决定是否插入 p 元素。 -->
+  <!-- 永远不要把 v-if 和 v-for 同时用在同一个元素上 -->
+  <p v-if="show">if指令</p>
+  <!-- 把一个 <template> 元素当做不可见的包裹元素，并在上面使用 v-if。最终的渲染结果将不包含 <template> 元素。 -->
+  <template v-if="show">
+    <h1>Title</h1>
+    <p>Paragraph 1</p>
+    <p>Paragraph 2</p>
+  </template>
+  <!-- v-else-if (2.1.0+)-->
+  <p v-else-if="!show">else-if指令</p>
+  <!-- v-else 指令来表示 v-if 的“else 块” -->
+  <!-- v-else 元素必须紧跟在带 v-if 或者 v-else-if 的元素的后面，否则它将不会被识别。 -->
+  <p v-else>else指令</p>
+  <!-- v-show 只是简单地切换元素的 CSS property display -->
+  <!-- 注意，v-show 不支持 <template> 元素，也不支持 v-else。 -->
+  <p v-show="show">show指令</p>
+  <!-- 
+  v-if vs v-show
+  1、v-if 是“真正”的条件渲染，因为它会确保在切换过程中条件块内的事件监听器和子组件适当地被销毁和重建。
+  2、v-if 也是惰性的：如果在初始渲染时条件为假，则什么也不做——直到条件第一次变为真时，才会开始渲染条件块。
+  3、相比之下，v-show 就简单得多——不管初始条件是什么，元素总是会被渲染，并且只是简单地基于 CSS 进行切换。
+  4、一般来说，v-if 有更高的切换开销，而 v-show 有更高的初始渲染开销。因此，如果需要非常频繁地切换，则使用 v-show 较好；如果在运行时条件很少改变，则使用 v-if 较好。 
+  -->
+
+  <!-- 列表渲染 -->
+  <!-- 2.2.0+ 的版本里，当在组件上使用 v-for 时，key 现在是必须的。 -->
+  <!-- v-for 把一个数组对应为一组元素 -->
+  <ul>
+    <li v-for="(item, index) in list" :key="item">{{index}}、这是{{item}}</li>
+  </ul>
+  <!-- v-for 遍历一个对象的 property -->
+  <ul>
+    <li v-for="(value, name, index) in listObj" :key="name">{{index}}、{{name}}单价：{{value}}</li>
+  </ul>
+
+  <!-- 事件处理 -->
+  <!-- v-on 指令监听 DOM 事件，并在触发时运行一些 JavaScript 代码 -->
+  <button v-on:click="counter += 1">Add 1</button>
+  <p>The button above has been clicked {{ counter }} times.</p>
+  <!-- v-on 还可以接收一个需要调用的方法名称 -->
+  <!-- 有时也需要在内联语句处理器中访问原始的 DOM 事件。可以用特殊变量 $event 把它传入方法 -->
+  <div v-on:click="clickHandle($event, 'hi')">按钮1</div>
+  <!-- 事件修饰符 -->
+  <!-- .stop 阻止单击事件继续传播 -->
+  <a v-on:click.stop="testHandle"></a>
+  <!-- .prevent 提交事件不再重载页面 -->
+  <form v-on:submit.prevent="testHandle"></form>
+  <!-- 修饰符可以串联 -->
+  <a v-on:click.stop.prevent="testHandle"></a>
+  <!-- 只有修饰符 -->
+  <form v-on:submit.prevent></form>
+  <!-- 添加事件监听器时使用事件捕获模式 -->
+  <!-- 即内部元素触发的事件先在此处理，然后才交由内部元素进行处理 -->
+  <div v-on:click.capture="testHandle">...</div>
+  <!-- 只当在 event.target 是当前元素自身时触发处理函数 -->
+  <!-- .self 即事件不是从内部元素触发的 -->
+  <div v-on:click.self="testHandle">...</div>
+  <!-- 点击事件将只会触发一次 （2.1.4+）-->
+  <a v-on:click.once="testHandle"></a>
+  <!-- 表示 listener 永远不会调用 preventDefault()（2.3.0+）-->
+  <div v-on:scroll.passive="testHandle">...</div>
+  <!-- 系统修饰键 (2.1.0)-->
+  <!-- .ctrl .alt .shift .meta -->
+  <!-- Alt + C -->
+  <input v-on:keyup.alt.67="clear">
+  <!-- Ctrl + Click -->
+  <div v-on:click.ctrl="doSomething">Do something</div>
+  <!-- .exact 修饰符 （2.5.0） -->
+  <!-- 没有任何系统修饰符被按下的时候才触发 -->
+  <button v-on:click.exact="testHandle">A</button>
+  <!-- 鼠标按钮修饰符 （2.2.0）-->
+  <!-- .left .right .middle -->
+  <!-- 这些修饰符会限制处理函数仅响应特定的鼠标按钮。 -->
+
+  <!-- 表单输入绑定 -->
+  <p>input message: " <input v-model="message">"</p>
+  <p>show input message: {{message}}</p>
+  <!-- 修饰符 -->
+  <!-- .lazy 在“change”时而非“input”时更新 -->
+  <input v-model.lazy="message">
+  <!-- .number 自动将用户的输入值转为数值类型 -->
+  <input v-model.number="counter" type="number">
+  <!-- .trim 自动过滤用户输入的首尾空白字符 -->
+  <input v-model.trim="message">
+</div>
+
+<script>
+new Vue({
+  el: '#app', // 渲染跟根组件选择器名称
+  data: { // 声明组件的响应式状态
+    message: 'Hello Vue.js!',
+    reserveMessage: '!sj.euV olleH',
+    htmlMessage: '<h1>Hello Vue.js</h1>',
+    isRed: true,
+    show: true,
+    eventtype: 'click', // http 不区分字母大小写
+    attrname: 'style', // http 不区分字母大小写
+    firstName: 'Foo',
+    lastName: 'Bar',
+    list: ['🍎', '🍌', '🌰', '🍊', '🥝'],
+    listObj: {'🍎': 5, '🍌': 3, '🌰': 6, '🍊': 1, '🥝': 12},
+    counter: 1,
+  },
+  methods:{ // 声明方法
+    testHandle: function (e) {
+      console.log(e);
+    },
+    clickHandle:function (e, message) {
+      alert(`点击了${e.target.innerHTML || '按钮'}: ${message}`);
+    },
+  },
+  watch: { // 声明侦听器
+    message: function (newVal, oldVal) {
+      console.log(newVal, oldVal);
+      this.reserveMessage = newVal.split('').reverse().join('');
+    }
+  },
+  computed: { // 声明计算属性
+    // 计算属性的 getter
+    fullName: function () {
+      // `this` 指向 vm 实例
+      return this.firstName + this.lastName;
+    }
+  },
+  
+})
+</script>
+</body>
+</html>
