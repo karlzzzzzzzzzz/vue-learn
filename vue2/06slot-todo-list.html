@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue 测试实例</title>
+<script src="https://cdn.staticfile.org/vue/2.6.2/vue.min.js"></script>
+</head>
+<body>
+<div id="app">
+  input todo name: <input type="text" v-model="todoName"> <button @click='addHandle'>add</button>
+  <todo-list message="123" :list="todoList" @finish="finishHandle">
+    <template v-slot:todo="{todo: item}">
+      <span v-if="item.isFinish">✓</span>
+      {{item.index}}、{{item.text}}
+    </template>
+  </todo-list>
+</div>
+
+<script>
+  Vue.component(
+    'todo-list',
+    {
+      template: `
+        <ul>
+          <li v-for="(item, index) in list" :key="item.text + index">
+            <slot name="todo" v-bind:todo="{...item, index}">
+              {{index}}、{{item.text}}
+            </slot>
+            <button v-if="!item.isFinish" @click="$emit('finish', index)">finish</button>
+            <button @click="list.splice(index, 1)">delete</button>
+          </li>
+        </ul>
+      `,
+      props: ['list'],
+    }
+  )
+  new Vue({
+    el: '#app', // 渲染跟根组件选择器名称
+    data: { // 声明组件的响应式状态
+      todoName: '',
+      todoList: [
+        {text: '🍎', isFinish: false},
+        {text: '🍌', isFinish: false},
+      ],
+    },
+    methods:{ // 声明方法
+      addHandle:function(e) {
+        this.todoList.push(this.todoName);
+        console.log("this:", this)
+        this.todoName = '';
+      },
+      deleteHandle:function(index) {
+        this.todoList.splice(index, 1);
+      },
+      finishHandle: function(index) {
+        console.log("index:", index)
+        this.todoList = this.todoList.map(function(v, i) {
+          return i === index ? { ...v, isFinish: true } : v;
+        })
+      }
+    },
+  })
+</script>
+</body>
+</html>

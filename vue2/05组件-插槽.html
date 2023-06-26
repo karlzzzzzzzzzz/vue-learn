@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue 组件插槽</title>
+<script src="https://cdn.staticfile.org/vue/2.6.2/vue.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <!-- ##内容插槽 -->
+  <slot-component>
+    <!-- 插槽内容 -->
+    <h1>标题</h1>
+    content message
+  </slot-component>
+
+  <!-- ##编译作用域 -->
+  <slot-component message="son message">
+    Clicking here will send you to: {{ message }}
+    <!--
+    这里的 `message` 会是 'father message'，因为其 (指该插槽的) 内容是
+    _传递给_ <slot-component> 的而不是
+    在 <slot-component> 组件*内部*定义的。
+    -->
+  </slot-component>
+
+  <!-- ##后备内容 -->
+  <slot-component></slot-component>
+
+  <!-- ##具名插槽 -->
+  <named-slot-component>
+    <template v-slot:header>
+      <h1>Here might be a page title</h1>
+    </template>
+    <!-- 具名插槽的缩写(2.6.0+) -->
+    <template #header>
+      <h1>Here might be a page title</h1>
+    </template>
+
+    <!-- 默认具名插槽的两种写法 -->
+    <p>A paragraph for the main content.</p>
+    <p>And another one.</p>
+    <!--
+    <template v-slot:header>
+      <p>A paragraph for the main content.</p>
+      <p>And another one.</p>
+    </template> 
+    -->
+
+    <!-- 动态插槽名(2.6.0+) -->
+    <template v-slot:['footer']>
+      <p>Here's some footer info</p>
+    </template>
+  </named-slot-component>
+
+  <!-- ##作用域插槽 -->
+  <!-- 让插槽内容能够访问子组件中才有的数据 -->
+  <scope-slot-component>
+    <!-- 绑定在 <slot> 元素上的 attribute 被称为插槽 prop。现在在父级作用域中, -->
+    <!-- 我们可以使用带值的 v-slot 来定义我们提供的插槽 prop 的名字 -->
+    <!-- 插槽 Prop 可以使用es6的解构 -->
+    <template v-slot:default="slotProps">
+      the message is: {{slotProps.message}}
+    </template>
+    <!-- v-slot 指令自 Vue 2.6.0 起被引入，提供更好的支持 slot 和 slot-scope attribute 的 API 替代方案 -->
+    <template slot="default" slot-scope="slotProps">
+      the message is: {{slotProps.message}}
+    </template>
+  </scope-slot-component>
+  <!-- 当被提供的内容只有默认插槽时，组件的标签才可以被当作插槽的模板来使用。这样我们就可以把 v-slot 直接用在组件上 -->
+  <!-- 注意默认插槽的缩写语法不能和具名插槽混用，因为它会导致作用域不明确 -->
+  <scope-slot-component v-slot="slotProps">
+    the message is: {{slotProps.message}}
+  </scope-slot-component>
+</div>
+
+<script>
+  Vue.component(
+    'slot-component', 
+    {
+      // <slot>标签会被替换为组件标签内的所有内容（包含任何模板代码）
+      // <slot>标签内容-为后备内容（当组件标签内无内容时将会渲染后备内容）
+      template: `
+        <div>
+          插槽内容如下：
+          <slot>后备内容</slot>
+        </div>
+      `,
+      props: ['message']
+    }
+  )
+  Vue.component(
+    'named-slot-component',
+    {
+      // 具名插槽的引用方式
+      template: `
+        <div>
+          <slot name="header"></slot>
+          <slot></slot>
+          <slot name="footer"></slot>
+        </div>
+      `,
+    }
+  )
+  Vue.component(
+    'scope-slot-component',
+    {
+      // 将数据作为 <slot> 元素的一个 attribute 绑定
+      template: `
+        <div>
+          <slot :message="message">scope-slot-component 后备内容</slot>
+        </div>
+      `,
+      data: function() {
+        return {
+          message: 'scope-slot-component message!'
+        }
+      }
+    }
+  )
+  new Vue({
+    el: '#app', // 渲染跟根组件选择器名称
+    data: { // 双向绑定数据
+      message: 'father message'
+    }
+  })
+</script>
+</body>
+</html>

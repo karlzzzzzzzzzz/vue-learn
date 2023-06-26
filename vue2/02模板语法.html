@@ -36,6 +36,11 @@
   <p>original message: " <input v-model="message">"</p>
   <p>reversed message: "{{ reserveMessage }}"</p>
 
+  <!-- 过滤器 -->
+  <!-- 过滤器可以串联 -->
+  <!-- 过滤器是 JavaScript 函数，因此可以接受参数 -->
+  {{ message | capitalize }}
+
   <!-- 计算属性 -->
   <!-- 计算属性是基于它们的响应式依赖进行缓存的。只在相关响应式依赖发生改变时它们才会重新求值 -->
   <p>{{ fullName }}</p>
@@ -145,6 +150,13 @@ new Vue({
     listObj: {'🍎': 5, '🍌': 3, '🌰': 6, '🍊': 1, '🥝': 12},
     counter: 1,
   },
+  filters: { // 声明过滤器
+    capitalize: function (value) {
+      if (!value) return ''
+      value = value.toString()
+      return value.charAt(0).toUpperCase() + value.slice(1)
+    }
+  }
   methods:{ // 声明方法
     testHandle: function (e) {
       console.log(e);
