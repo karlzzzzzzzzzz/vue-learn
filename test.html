@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  获取扫码枪输入内容demo<br />
+  扫码内容：<span id="scanText">请扫码</span>
+</body>
+<script>
+  let lastTime = 0;
+  let scanCode = '';
+  function clearScanCode() {
+    lastTime = 0;
+    scanCode = '';
+  }
+  function getScanCodeHandel(scanCode) {
+    const codeDom = document.querySelector('#scanText');
+    codeDom.innerHTML = '处理中，请稍后...';
+    setTimeout(function () {
+      codeDom.innerHTML = scanCode;
+    }, 300);
+  }
+
+  document.addEventListener('keypress', function (e) {
+    e = e || window.event;
+    let curCode = e.keycode || e.which || e.charCode;
+    let curTime = new Date().getTime();
+    if (lastTime > 0) {
+      if (curTime - lastTime <= 80) {
+        scanCode += String.fromCharCode(curCode);
+      } else if (curTime - lastTime > 80) {
+        clearScanCode();
+      }
+    } else {
+      scanCode += String.fromCharCode(curCode);
+    }
+    lastTime = curTime;
+    if (curCode == 13) {
+      c
+      if (scanCode) {
+        getScanCodeHandel(scanCode);
+        clearScanCode();
+      }
+    }
+  })
+</script>
+
+</html>

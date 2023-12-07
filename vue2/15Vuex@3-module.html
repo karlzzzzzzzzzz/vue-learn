@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue-Vuex</title>
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<script src="https://unpkg.com/vuex@3.6.2/dist/vuex.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div>moduleA:</div>
+    <div>moduleB:</div>
+    <count-component-1></count-component-1>
+    <count-component-2></count-component-2>
+    <count-component-3></count-component-3>
+    <add-component></add-component>
+  </div>
+  
+</body>
+<script>
+
+  const moduleA = {
+    state: () => ({
+      count: 0
+    }),
+    mutations: {
+      // 这里的 `state` 对象是模块的局部状态
+      // 根节点状态:rootState
+      increment (state, payload, rootState) {
+        console.log(rootState)
+        state.count++
+      }
+    },
+    getters: {
+      // 这里的 `state` 对象是模块的局部状态
+      // 根节点状态: rootState
+      // 全局 getter: rootGetters
+      doubleCount (state, getter, rootState, rootGetters) {
+        return state.count * 2
+      }
+    },
+    actions: {
+      // 这里的 `state` 对象是模块的局部状态
+      // 根节点状态:rootState
+      getRootCount ({ state, commit, rootState }) {
+        console.log(rootState)
+        commit('increment');
+        // 若需要在全局命名空间内分发 action 或提交 mutation，
+        // 将 { root: true } 作为第三参数传给 dispatch 或 commit 即可
+        commit('someOtherAction') // -> 'foo/someOtherAction'
+        commit('someOtherAction', null, { root: true }) // -> 'someOtherAction'
+      }
+    }
+  }
+
+  const moduleB = {
+    // 默认情况下，模块内部的 action、mutation 和 getter 是注册在全局命名空间
+    // 可以通过添加 namespaced: true 的方式使其成为带命名空间的模块。
+    // 当模块被注册后，它的所有 getter、action 及 mutation 都会自动根据模块注册的路径调整命名。
+    namespaced: true,
+    // 模块内的状态已经是嵌套的了，使用 `namespaced` 属性不会对其产生影响
+    state: () => ({
+      count: 0
+    }),
+    mutations: {
+      // -> commit['moduleB/increment']
+      increment (state) {
+        state.count++
+      }
+    },
+    getters: {
+      // -> getters['moduleB/doubleCount']
+      doubleCount (state) {
+        return state.count * 2
+      }
+    },
+    // 模块嵌套
+    modules:{
+      moduleB_1: {
+        actions:{
+          someAction:{
+            // 若需要在带命名空间的模块注册全局 action，你可添加 root: true
+            root: true,
+            handler (namespacedContext, payload) {
+              console.log("handler --> namespacedContext, payload:", namespacedContext, payload)
+              // ...doSomething
+            }
+          }
+        }
+        getters: {
+          // -> getters['moduleB/doubleCount']
+          doubleCount (state) {
+            return state.count * 2
+          }
+        },
+      },
+      moduleB_2:{
+        namespaced: true,
+        // 进一步嵌套命名空间
+        mutations:{
+           // -> commit['moduleB/moduleB_2/increment']
+          increment (state) {
+            state.count++
+          }
+        }
+      }
+    }
+  }
+
+  const store = new Vuex.Store({
+    // 根节点状态
+    data: {
+      rootCount: 10;
+    },
+    modules: {
+      a: moduleA,
+      b: moduleB
+  })
+
+  // 在 store 创建之后，你可以使用 store.registerModule 方法注册模块
+  // 注册模块 `myModule`
+  store.registerModule('myModule', {
+    // ...
+  })
+  // 注册嵌套模块 `nested/myModule`
+  store.registerModule(['nested', 'myModule'], {
+    // ...
+  })
+  // 可以使用 store.unregisterModule(moduleName) 来动态卸载模块。
+  // 注意，你不能使用此方法卸载静态模块（即创建 store 时声明的模块）。
+  // 可以通过 store.hasModule(moduleName) 方法检查该模块是否已经被注册到 store。
+
+  Vue.component(
+    'count-component-1', 
+    {
+      template: `<div>
+        moduleA-count:{{ count }}
+        <button @click="increment" >+1</button>
+      </div>`,
+      // 可以将模块的空间名称字符串作为第一个参数传递给上述函数，这样所有绑定都会自动将该模块作为上下文
+      computed: Vuex.mapState('moduleA', {
+        count: state => state.count,
+      }),
+      methods: {
+        ...Vuex.mapActions('moduleA', ['increment'])
+      }
+    }
+  )
+
+  // 可以通过使用 createNamespacedHelpers 创建基于某个命名空间辅助函数。
+  // 它返回一个对象，对象里有新的绑定在给定命名空间值上的组件绑定辅助函数
+  const { mapState, mapActions } = Vuex.createNamespacedHelpers('moduleA')
+
+  Vue.component(
+    'count-component-2', 
+    {
+      template: `<div>
+        moduleA-count:{{ count }}
+        <button @click="increment" >+1</button>
+      </div>`,
+      computed: mapState({
+        count: state => state.count,
+      }),
+      methods: {
+        ...mapActions(['increment'])
+      }
+    }
+  )
+
+  // mapGetters 辅助函数
+  Vue.component(
+    'count-component-3', 
+    {
+      // Getter 会暴露为 store.getters 对象
+      template: `<div>
+        {{ doubleCount }}
+        {{ doubleCount1 }}
+        {{ this.$store.getters.doubleCount }}
+      </div>`,
+      computed: {
+        // mapGetters 辅助函数仅仅是将 store 中的 getter 映射到局部计算属性
+        // 使用对象展开运算符将 getter 混入 computed 对象中
+        ...Vuex.mapGetters([
+          'doubleCount',
+        ]),
+        ...Vuex.mapGetters({
+          // 别名
+          doubleCount1: 'doubleCount',
+        })
+      }
+    }
+  )
+
+  Vue.component(
+    'add-component', 
+    {
+      template: `
+        <div>
+          <button @click="addHandle" >+1</button>
+          <button @click="subHandle" >-1</button>
+          <button @click="asyncReset" >async reset</button>
+        </div>
+      `,
+      methods: {
+        addHandle: function() {
+          // 通过 store.commit 方法触发状态变更
+          // 提交载荷（Payload）
+          store.commit('increment',{ a:1, b:2});
+          
+        },
+        // 提交 mutation 的另一种方式是直接使用包含 type 属性的对象
+        // 当使用对象风格的提交方式，整个对象都作为载荷传给 mutation 函数
+        subHandle: function() {
+          store.commit({
+            type: 'subtract',
+            a: 1,
+            b: 2,
+          })
+        },
+        asyncReset:function() {
+          // Action 通过 store.dispatch 方法触发
+          // store.dispatch 可以处理被触发的 action 的处理函数返回的 Promise，
+          // 并且 store.dispatch 仍旧返回 Promise
+          store.dispatch('reset');
+        },
+        // mapActions 辅助函数将组件的 methods 映射为 store.dispatch
+        ...mapActions([
+          'reset',
+        ]),
+        ...mapActions({
+          // 重命名
+          mapReset: 'reset'
+        })
+      }
+    }
+  )
+
+  new Vue({
+    store,
+  }).$mount('#app')
+</script>
+</html>

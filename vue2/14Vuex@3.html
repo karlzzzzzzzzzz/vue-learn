@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue-Vuex</title>
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<script src="https://unpkg.com/vuex@3.6.2/dist/vuex.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>什么是Vuex</h1>
+    <p>
+      Vuex 是一个专为 Vue.js 应用程序开发的状态管理模式 + 库。
+      它采用集中式存储管理应用的所有组件的状态，并以相应的规则保证状态以一种可预测的方式发生变化。 
+    </p>
+    <img src="https://vuex.vuejs.org/vuex.png" alt="Vuex">
+    <count-component-1></count-component-1>
+    <count-component-2></count-component-2>
+    <count-component-3></count-component-3>
+    <add-component></add-component>
+  </div>
+  
+</body>
+<script>
+
+  // 创建一个新的 store 实例
+  const store = new Vuex.Store({
+    state: {
+      count: 0
+    },
+    // Vuex 允许我们在 store 中定义“getter”（可以认为是 store 的计算属性）。
+    // 就像计算属性一样，getter 的返回值会根据它的依赖被缓存起来，且只有当它的依赖值发生了改变才会被重新计算。
+    getters: {
+      doubleCount: state => {
+        return state.count * 2;
+      }
+    },
+    // 更改 Vuex 的 store 中的状态的唯一方法是提交 mutation
+    // mutation 都是同步事务
+    mutations: {
+      // 载荷（Payload）
+      increment (state, payload) {
+        state.count++;
+        console.log(payload);
+      },
+      subtract(state, payload) {
+        state.count--;
+        console.log(payload);
+      },
+      reset (state){
+        state.count = 0;
+      }
+    },
+    // Action 提交的是 mutation，而不是直接变更状态。
+    // Action 可以包含任意异步操作。
+    actions: {
+    reset ({ commit }) {
+      setTimeout(function () {
+        commit('reset');
+      },1000)
+    },
+  }
+
+  })
+
+  Vue.component(
+    'count-component-1', 
+    {
+      // 通过 this.$store.state 来获取状态对象
+      template: `<div>
+        {{ this.$store.state.count }}
+        {{ count }}
+      </div>`,
+      computed: {
+        // 在计算属性中返回某个状态,
+        // 每当 store.state.count 变化的时候, 都会重新求取计算属性，并且触发更新相关联的 DOM.
+        count() {
+          return store.state.count;
+        }
+      }
+    }
+  )
+
+  // mapState 辅助函数
+  Vue.component(
+    'count-component-2', 
+    {
+      template: `<div>
+        {{ count }}
+        {{ count1 }}
+        {{ countAlias }}
+        {{ countPlusLocalState }}
+      </div>`,
+      computed: Vuex.mapState({
+        // 箭头函数可使代码更简练
+        count1: state => state.count,
+        // 传字符串参数 'count' 等同于 `state => state.count`
+        countAlias: 'count',
+        // 为了能够使用 `this` 获取局部状态，必须使用常规函数
+        countPlusLocalState (state) {
+          return state.count + 1
+        },
+        // 当映射的计算属性的名称与 state 的子节点名称相同时，我们也可以给 mapState 传一个字符串数组。
+        // 使用对象展开运算符将此对象混入到外部对象中
+        ...Vuex.mapState([
+          // 映射 this.count 为 store.state.count
+          'count'
+        ])
+      })
+    }
+  )
+
+  // mapGetters 辅助函数
+  Vue.component(
+    'count-component-3', 
+    {
+      // Getter 会暴露为 store.getters 对象
+      template: `<div>
+        {{ doubleCount }}
+        {{ doubleCount1 }}
+        {{ this.$store.getters.doubleCount }}
+      </div>`,
+      computed: {
+        // mapGetters 辅助函数仅仅是将 store 中的 getter 映射到局部计算属性
+        // 使用对象展开运算符将 getter 混入 computed 对象中
+        ...Vuex.mapGetters([
+          'doubleCount',
+        ]),
+        ...Vuex.mapGetters({
+          // 别名
+          doubleCount1: 'doubleCount',
+        })
+      }
+    }
+  )
+
+  Vue.component(
+    'add-component', 
+    {
+      template: `
+        <div>
+          <button @click="addHandle" >+1</button>
+          <button @click="subHandle" >-1</button>
+          <button @click="asyncReset" >async reset</button>
+        </div>
+      `,
+      methods: {
+        addHandle: function() {
+          // 通过 store.commit 方法触发状态变更
+          // 提交载荷（Payload）
+          store.commit('increment',{ a:1, b:2});
+          
+        },
+        // 提交 mutation 的另一种方式是直接使用包含 type 属性的对象
+        // 当使用对象风格的提交方式，整个对象都作为载荷传给 mutation 函数
+        subHandle: function() {
+          store.commit({
+            type: 'subtract',
+            a: 1,
+            b: 2,
+          })
+        },
+        asyncReset:function() {
+          // Action 通过 store.dispatch 方法触发
+          // store.dispatch 可以处理被触发的 action 的处理函数返回的 Promise，
+          // 并且 store.dispatch 仍旧返回 Promise
+          store.dispatch('reset');
+        },
+        // mapActions 辅助函数将组件的 methods 映射为 store.dispatch
+        ...mapActions([
+          'reset',
+        ]),
+        ...mapActions({
+          // 重命名
+          mapReset: 'reset'
+        })
+      }
+    }
+  )
+
+  new Vue({
+    store,
+  }).$mount('#app')
+</script>
+</html>

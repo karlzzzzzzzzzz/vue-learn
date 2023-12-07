@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue-Router</title>
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<script src="https://unpkg.com/vue-router@3/dist/vue-router.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Hello App!</h1>
+    <p>
+      <!-- 使用 router-link 组件来导航. -->
+      <!-- 通过传入 `to` 属性指定链接. -->
+      <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
+      <router-link to="/user/123">Go to user 123</router-link>
+      <!-- 路由重命名引用 -->
+      <!-- <router-link :to="{ name: 'user', params: { userId: 123 }}">Go to user 123</router-link> -->
+      <router-link to="/user/456">Go to user 456</router-link>
+    </p>
+    <!-- 路由出口 -->
+    <!-- 路由匹配到的组件将渲染在这里 -->
+    <!-- 命名视图 -->
+    <!-- 如果 router-view 没有设置名字，那么默认为 default -->
+    <router-view></router-view>
+    <router-view name="test"></router-view>
+  </div>
+  
+</body>
+<script>
+  const User = {
+    // 当匹配到一个路由时，参数值会被设置到 this.$route.params，可以在每个组件内使用
+    template: `
+      <div>
+        <div>User {{ $route.params.id }}</div>
+        <div>导航地址：<input v-model="url" /></div>
+        <div>
+          <input type="button" value="push" @click="routerHandle('push')"/>
+          <input type="button" value="replace" @click="routerHandle('replace')"/>
+          <input type="button" value="go(-1)" @click="routerHandle('go')"/>
+        </div>
+        <router-link :to="'/user/' + $route.params.id + '/profile'">Go to user profile</router-link>
+        <router-link :to="'/user/' + $route.params.id + '/posts'">Go to user posts</router-link>
+        <router-view></router-view> 
+      </div>
+    `,
+    data: function() {
+      return {
+        url: '',
+      }
+    },
+    // 两个路由都渲染同个组件(组件实例会被复用),组件的生命周期钩子不会再被调用
+    mounted: function() {
+      console.log('User Component mounted ！');
+    },
+    methods: {
+      routerHandle:function(type) {
+        // 编程式导航
+        // 路由重命名引用
+        // router.push({ name: 'user', params: { userId: 123 } })
+        switch (type) {
+          case 'push':
+            this.$router.push(this.url);
+            break;
+          case 'replace':
+            this.$router.replace(this.url);
+            break;
+          case 'go':
+            this.$router.go(-1);
+            break;
+          default: break;
+        }
+      }
+    },
+    watch: {
+      // 复用组件时，想对路由参数的变化作出响应的话，你可以简单地 watch (监测变化) $route 对象
+      $route(to, from) {
+        console.log("$route --> to, from:", to, from)
+      }
+    }
+  }
+
+  const UserProfile = { template: '<div>UserProfile</div>'}
+  const UserPosts = { template: '<div>UserPosts</div>'}
+  const Test = {
+    props: ['id'],
+    template: '<div>Test: {{ id }}</div>',
+  }
+
+  const NotFound = {
+    template: '<h1>404 not found</h1>',
+    watch: {
+      // 当使用一个通配符时，$route.params 内会自动添加一个名为 pathMatch 参数。它包含了 URL 通过通配符被匹配的部分
+      $route(to, from) {
+        console.log("$route --> to.params.pathMatch:", to.params.pathMatch)
+      }
+    }
+  }
+
+  const router = new VueRouter({
+    // vue-router 默认 hash 模式
+    mode: 'history',
+    // 匹配的优先级就按照路由的定义顺序：路由定义得越早，优先级就越高。
+    routes: [
+      {
+        path: '/',
+        // 重定向
+        redirect: '/user/test',
+        // 别名
+        // “别名”的功能让你可以自由地将 UI 结构映射到任意的 URL
+        alias: '/renameUrl',
+      },
+      // 动态路径参数 以冒号开头
+      { 
+        path: '/user/:id', 
+        name: 'user',
+        components: {
+          default: User,
+          test: Test,
+        },
+        // 如果 props 被设置为 true，route.params 将会被设置为组件属性。
+        props: {
+          default: false,
+          test: true,
+        },
+        // 路由元信息
+        // $route.matched 获取元信息数据（匹配路由为数组时，$route为数组）
+        meta: { requiresAuth: true },
+        children: [
+        {
+          // 当 /user/:id/profile 匹配成功，
+          // UserProfile 会被渲染在 User 的 <router-view> 中
+          path: 'profile',
+          component: UserProfile
+        },
+        {
+          // 当 /user/:id/posts 匹配成功
+          // UserPosts 会被渲染在 User 的 <router-view> 中
+          path: 'posts',
+          component: UserPosts
+        }
+      ]
+      },
+        // 会匹配以 `/user-` 开头的任意路径
+      { path: '/user-*' },
+      // 会匹配所有路径
+      // 放在最后,通常用于客户端 404 错误
+      { path: '*', component: NotFound },
+    ]
+  })
+
+  // 4. 创建和挂载根实例。
+  // 记得要通过 router 配置参数注入路由，
+  // 从而让整个应用都有路由功能
+  new Vue({
+    router,
+  }).$mount('#app')
+</script>
+</html>

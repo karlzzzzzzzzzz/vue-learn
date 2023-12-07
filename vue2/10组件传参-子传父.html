@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Vue 组件传参</title>
+<script src="https://cdn.staticfile.org/vue/2.6.2/vue.min.js"></script>
+</head>
+<body>
+<div id="parent">
+  {{ message }}
+  <div>childMessage is : {{ childMessage }}</div>
+  <child-1 ref="child1component" @getmessage="getMessage"></child-1>
+</div>
+
+<script>
+  Vue.component('child-1', {
+    data: function() {
+      return {
+        message: 'child-1 message!',
+      }
+    },
+    template: `
+      <div>child-1</div>
+    `,
+    mounted: function() {
+      // 调用自定义函数传参
+      this.$emit('getmessage', this.message)
+    }
+  })
+  new Vue({
+    el: '#parent', // 渲染跟根组件选择器名称
+    data: { // 双向绑定数据
+      message: 'parent message!',
+      childMessage: '',
+    },
+    mounted: function() {
+      // $refs 只会在组件渲染完成之后生效，并且它们不是响应式的。
+      // 这仅作为一个用于直接操作子组件的“逃生舱”——你应该避免在模板或计算属性中访问 $refs。
+      this.message = this.$refs.child1component.message;
+    },
+    methods: {
+      getMessage(value) {
+        this.childMessage = value;
+      }
+    }
+  })
+</script>
+</body>
+</html>
